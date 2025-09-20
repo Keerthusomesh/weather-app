@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic Weather Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      transition: background 0.5s;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 50px auto;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    input {
+      padding: 10px;
+      width: 70%;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      padding: 10px 15px;
+      margin-left: 5px;
+      background: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .weather {
+      margin-top: 20px;
+      opacity: 0;
+      transform: scale(0.9);
+      transition: all 0.5s ease;
+    }
+
+    .weather.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .weather h2 {
+      margin: 10px 0;
+    }
+
+    .weather img {
+      width: 80px;
+      height: 80px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌦 Dynamic Weather Dashboard</h1>
+    <input type="text" id="cityInput" placeholder="Enter city name">
+    <button onclick="getWeather()">Search</button>
+    <button onclick="getLocationWeather()">📍 My Location</button>
+
+    <div class="weather" id="weatherResult">
+      <p>Search for a city or use your location...</p>
+    </div>
+  </div>
+
+  <script>
+    const apiKey = "519d934ceb75fd67d565d7bd0e0a5ccc"; // Replace with your OpenWeatherMap API key
+
+    async function getWeather() {
+      const city = document.getElementById("cityInput").value.trim();
+      if (!city) return alert("Please enter a city name");
+
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.cod !== 200) {
+          showError("❌ City not found!");
+          return;
+        }
+
+        showWeather(data);
+      } catch (err) {
+        showError("❌ Error fetching weather data.");
+      }
+    }
+
+    async function getLocationWeather() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+
+          const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+
+          try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            showWeather(data);
+          } catch (err) {
+            showError("❌ Error fetching location weather.");
+          }
+        });
+      } else {
+        alert("Geolocation not supported by your browser.");
+      }
+    }
+
+    function showWeather(data) {
+      // Dynamic background
+      const weatherMain = data.weather[0].main;
+      if (weatherMain === "Clear") {
+        document.body.style.background = "linear-gradient(to right, #fceabb, #f8b500)";
+      } else if (weatherMain === "Clouds") {
+        document.body.style.background = "linear-gradient(to right, #bdc3c7, #2c3e50)";
+      } else if (weatherMain === "Rain") {
+        document.body.style.background = "linear-gradient(to right, #3a7bd5, #3a6073)";
+      } else if (weatherMain === "Snow") {
+        document.body.style.background = "linear-gradient(to right, #3a7bd5, #3a6073)";
+      } else {
+        document.body.style.background = "linear-gradient(to right, #74ebd5, #ACB6E5)";
+      }
+
+      const iconUrl = `http://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
+      const weatherHTML = `
+        <h2>${data.name}, ${data.sys.country}</h2>
+        <img src="${iconUrl}" alt="Weather Icon">
+        <p>🌡 Temperature: ${data.main.temp}°C</p>
+        <p>☁ Condition: ${data.weather[0].description}</p>
+        <p>💧 Humidity: ${data.main.humidity}%</p>
+        <p>🌬 Wind Speed: ${data.wind.speed} m/s</p>
+      `;
+
+      const resultDiv = document.getElementById("weatherResult");
+      resultDiv.innerHTML = weatherHTML;
+      resultDiv.classList.remove("show");
+
+      // Trigger pop animation
+      setTimeout(() => {
+        resultDiv.classList.add("show");
+      }, 50);
+    }
+
+    function showError(message) {
+      const resultDiv = document.getElementById("weatherResult");
+      resultDiv.innerHTML = `<p>${message}</p>`;
+      resultDiv.classList.remove("show");
+      setTimeout(() => {
+        resultDiv.classList.add("show");
+      }, 50);
+    }
+  </script>
+</body>
+</html>
